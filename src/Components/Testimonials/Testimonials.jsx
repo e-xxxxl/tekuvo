@@ -148,6 +148,44 @@ const Testimonials = () => {
     return () => clearInterval(interval) // Clean up on unmount
   }, [activeIndex])
 
+  // Touch swipe functionality
+  useEffect(() => {
+    // Touch handling for swipe
+    const sliderElement = sliderRef.current
+    let touchStartX = 0
+    let touchEndX = 0
+
+    const handleTouchStart = (e) => {
+      touchStartX = e.changedTouches[0].screenX
+    }
+
+    const handleTouchEnd = (e) => {
+      touchEndX = e.changedTouches[0].screenX
+      handleSwipe()
+    }
+
+    const handleSwipe = () => {
+      // Swipe left (next)
+      if (touchEndX < touchStartX - 50) {
+        nextTestimonial()
+      }
+      // Swipe right (previous)
+      if (touchEndX > touchStartX + 50) {
+        prevTestimonial()
+      }
+    }
+
+    if (sliderElement) {
+      sliderElement.addEventListener("touchstart", handleTouchStart, { passive: true })
+      sliderElement.addEventListener("touchend", handleTouchEnd, { passive: true })
+
+      return () => {
+        sliderElement.removeEventListener("touchstart", handleTouchStart)
+        sliderElement.removeEventListener("touchend", handleTouchEnd)
+      }
+    }
+  }, [])
+
   // Render star rating
   const renderRating = (rating) => {
     return (
@@ -160,7 +198,7 @@ const Testimonials = () => {
             viewBox="0 0 20 20"
             fill="currentColor"
           >
-            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-.181h3.461a1 1 0 00.951-.69l1.07-3.292z" />
           </svg>
         ))}
       </div>
@@ -168,18 +206,22 @@ const Testimonials = () => {
   }
 
   return (
-    <section id="testimonials" ref={sectionRef} className="relative py-24 px-6 bg-[#0B0C10] text-white overflow-hidden">
+    <section
+      id="testimonials"
+      ref={sectionRef}
+      className="relative py-16 md:py-24 px-4 md:px-6 bg-[#0B0C10] text-white overflow-hidden"
+    >
       {/* Decorative elements */}
       <div
         ref={decorationRef}
-        className="absolute top-40 left-10 w-72 h-72 rounded-full bg-gradient-to-b from-[#00FF9C]/10 to-transparent blur-3xl"
+        className="absolute top-20 md:top-40 left-5 md:left-10 w-48 md:w-72 h-48 md:h-72 rounded-full bg-gradient-to-b from-[#00FF9C]/10 to-transparent blur-3xl"
         aria-hidden="true"
       />
 
       <div className="max-w-6xl mx-auto">
         {/* Section header */}
-        <div className="text-center mb-16">
-          <h2 ref={titleRef} className="text-4xl md:text-5xl font-bold inline-block relative">
+        <div className="text-center mb-10 md:mb-16">
+          <h2 ref={titleRef} className="text-3xl md:text-5xl font-bold inline-block relative">
             What Our Clients Say
             <span className="absolute -bottom-2 left-0 w-full h-1 bg-[#00FF9C]/50 rounded-full"></span>
           </h2>
@@ -188,12 +230,12 @@ const Testimonials = () => {
         {/* Testimonials slider */}
         <div ref={sliderRef} className="relative max-w-4xl mx-auto">
           {/* Large quote mark */}
-          <div className="absolute -top-10 -left-4 md:-left-10 text-[#00FF9C]/20">
-            <Quote size={80} strokeWidth={1} />
+          <div className="absolute -top-6 md:-top-10 -left-2 md:-left-10 text-[#00FF9C]/20">
+            <Quote size={50} className="md:w-20 md:h-20" strokeWidth={1} />
           </div>
 
           {/* Testimonials */}
-          <div className="relative min-h-[300px] flex items-center justify-center">
+          <div className="relative min-h-[250px] md:min-h-[300px] flex items-center justify-center">
             {testimonials.map((testimonial, index) => (
               <div
                 key={index}
@@ -202,7 +244,7 @@ const Testimonials = () => {
                   index === activeIndex ? "z-10" : "opacity-0"
                 }`}
               >
-                <p className="text-xl md:text-2xl font-light italic mb-8 leading-relaxed text-white/90">
+                <p className="text-lg md:text-2xl font-light italic mb-6 md:mb-8 leading-relaxed text-white/90">
                   "{testimonial.quote}"
                 </p>
                 <div className="flex flex-col items-center">
@@ -219,17 +261,17 @@ const Testimonials = () => {
           {/* Navigation arrows */}
           <button
             onClick={prevTestimonial}
-            className="absolute top-1/2 -left-4 md:-left-12 transform -translate-y-1/2 bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all duration-300"
+            className="absolute top-1/2 left-0 md:-left-12 transform -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-2 md:p-3 transition-all duration-300 touch-manipulation"
             aria-label="Previous testimonial"
           >
-            <ChevronLeft className="h-6 w-6 text-white/80" />
+            <ChevronLeft className="h-5 w-5 md:h-6 md:w-6 text-white/80" />
           </button>
           <button
             onClick={nextTestimonial}
-            className="absolute top-1/2 -right-4 md:-right-12 transform -translate-y-1/2 bg-white/5 hover:bg-white/10 rounded-full p-2 transition-all duration-300"
+            className="absolute top-1/2 right-0 md:-right-12 transform -translate-y-1/2 bg-white/10 hover:bg-white/20 rounded-full p-2 md:p-3 transition-all duration-300 touch-manipulation"
             aria-label="Next testimonial"
           >
-            <ChevronRight className="h-6 w-6 text-white/80" />
+            <ChevronRight className="h-5 w-5 md:h-6 md:w-6 text-white/80" />
           </button>
 
           {/* Navigation dots */}
@@ -249,10 +291,10 @@ const Testimonials = () => {
         </div>
 
         {/* Optional CTA */}
-        <div className="mt-16 text-center">
+        <div className="mt-10 md:mt-16 text-center">
           <a
             href="#contact"
-            className="inline-block px-8 py-3 rounded-lg bg-[#00FF9C]/10 hover:bg-[#00FF9C]/20 text-[#00FF9C] font-medium transition-all duration-300 hover:scale-105"
+            className="inline-block px-6 py-2.5 md:px-8 md:py-3 rounded-lg bg-[#00FF9C]/10 hover:bg-[#00FF9C]/20 text-[#00FF9C] font-medium transition-all duration-300 hover:scale-105 text-sm md:text-base"
           >
             Become Our Next Success Story
           </a>

@@ -136,7 +136,7 @@ const BookCall = () => {
             </p>
             <a
               ref={buttonRef}
-              href="https://calendly.com/your-link"
+              href="https://calendly.com/eajejohnson"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-[#00FF9C]/80 text-[#0B0C10] font-bold px-8 py-4 rounded-xl transition-all duration-300"

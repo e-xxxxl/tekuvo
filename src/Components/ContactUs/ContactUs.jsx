@@ -4,6 +4,13 @@ import { useEffect, useRef, useState } from "react"
 import { gsap } from "gsap"
 import { ScrollTrigger } from "gsap/ScrollTrigger"
 import { Mail, Phone, Send, Github, Linkedin, Twitter, Instagram } from "lucide-react"
+import emailjs from '@emailjs/browser'
+
+const EMAILJS_CONFIG = {
+  serviceId: "service_wsuigpn", // Replace with your actual service ID
+  templateId: "template_l0khi8e", // Replace with your actual template ID
+  publicKey: "tBbXdAlWzczsAhLu0" // Replace with your actual public key
+}
 
 // Register ScrollTrigger plugin
 if (typeof window !== "undefined") {
@@ -16,6 +23,8 @@ const ContactUs = () => {
     email: "",
     message: "",
   })
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [submitStatus, setSubmitStatus] = useState(null)
 
   const sectionRef = useRef(null)
   const titleRef = useRef(null)
@@ -25,16 +34,13 @@ const ContactUs = () => {
   const decorationRef = useRef(null)
 
   useEffect(() => {
-    // Create a GSAP context for clean up
     const ctx = gsap.context(() => {
-      // Set initial states
       gsap.set(titleRef.current, { opacity: 0, y: 30 })
       gsap.set(formRef.current, { opacity: 0, x: -30 })
       gsap.set(infoRef.current, { opacity: 0, x: 30 })
       gsap.set(socialRef.current, { opacity: 0, y: 20 })
       gsap.set(decorationRef.current, { opacity: 0, scale: 0.8 })
 
-      // Create scroll-triggered animations
       gsap.to(titleRef.current, {
         opacity: 1,
         y: 0,
@@ -94,7 +100,6 @@ const ContactUs = () => {
         },
       })
 
-      // Create subtle floating animation for decoration
       gsap.to(decorationRef.current, {
         x: "-20px",
         duration: 4,
@@ -104,7 +109,7 @@ const ContactUs = () => {
       })
     }, sectionRef)
 
-    return () => ctx.revert() // Clean up animations
+    return () => ctx.revert()
   }, [])
 
   const handleChange = (e) => {
@@ -112,17 +117,41 @@ const ContactUs = () => {
     setFormData((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
+ const handleSubmit = async (e) => {
     e.preventDefault()
-    // Here you would typically handle form submission
-    console.log("Form submitted:", formData)
-    alert("Thanks for your message! We'll get back to you soon.")
-    setFormData({ name: "", email: "", message: "" })
+    setIsSubmitting(true)
+    setSubmitStatus(null)
+
+    try {
+      // Initialize EmailJS with the public key
+      emailjs.init(EMAILJS_CONFIG.publicKey)
+
+      const response = await emailjs.send(
+        EMAILJS_CONFIG.serviceId,
+        EMAILJS_CONFIG.templateId,
+        {
+          from_name: formData.name,
+          from_email: formData.email,
+          message: formData.message,
+        }
+      )
+
+      if (response.status === 200) {
+        setSubmitStatus("success")
+        setFormData({ name: "", email: "", message: "" })
+      } else {
+        throw new Error("Failed to send message")
+      }
+    } catch (error) {
+      console.error("Error sending email:", error)
+      setSubmitStatus("error")
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
     <section id="contact" ref={sectionRef} className="relative py-24 px-6 bg-[#0B0C10] text-white overflow-hidden">
-      {/* Decorative elements */}
       <div
         ref={decorationRef}
         className="absolute bottom-20 left-10 w-80 h-80 rounded-full bg-gradient-to-r from-[#00FF9C]/10 to-transparent blur-3xl"
@@ -130,7 +159,6 @@ const ContactUs = () => {
       />
 
       <div className="max-w-6xl mx-auto">
-        {/* Section header */}
         <div className="text-center mb-16">
           <h2 ref={titleRef} className="text-4xl md:text-5xl font-bold inline-block relative">
             Get In Touch
@@ -139,7 +167,6 @@ const ContactUs = () => {
         </div>
 
         <div className="flex flex-col lg:flex-row gap-12">
-          {/* Contact form */}
           <div ref={formRef} className="lg:w-1/2">
             <form onSubmit={handleSubmit} className="space-y-6">
               <div>
@@ -190,17 +217,32 @@ const ContactUs = () => {
                 ></textarea>
               </div>
 
-              <button
-                type="submit"
-                className="inline-flex items-center gap-2 bg-[#00FF9C]/80 hover:bg-[#00FF9C] text-[#0B0C10] font-bold px-6 py-3 rounded-lg transition-colors duration-300"
-              >
-                <Send className="h-4 w-4" />
-                Send Message
-              </button>
+              <div className="flex items-center gap-4">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className="inline-flex items-center gap-2 bg-[#00FF9C]/80 hover:bg-[#00FF9C] text-[#0B0C10] font-bold px-6 py-3 rounded-lg transition-colors duration-300 disabled:opacity-70 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? (
+                    "Sending..."
+                  ) : (
+                    <>
+                      <Send className="h-4 w-4" />
+                      Send Message
+                    </>
+                  )}
+                </button>
+
+                {submitStatus === "success" && (
+                  <span className="text-[#00FF9C]">Message sent successfully!</span>
+                )}
+                {submitStatus === "error" && (
+                  <span className="text-red-400">Failed to send message. Please try again.</span>
+                )}
+              </div>
             </form>
           </div>
 
-          {/* Contact info */}
           <div ref={infoRef} className="lg:w-1/2 space-y-8">
             <div className="bg-white/5 backdrop-blur-sm p-6 rounded-xl">
               <h3 className="text-xl font-bold mb-4 text-[#00FF9C]">Contact Information</h3>
@@ -210,7 +252,7 @@ const ContactUs = () => {
                   <Mail className="h-5 w-5 text-[#00FF9C] mt-1" />
                   <div>
                     <div className="font-medium">Email</div>
-                    <a href="mailto:hello@tekuvo.com" className="text-white/70 hover:text-white transition-colors">
+                    <a href="mailto:eajejohnson@gmail.com" className="text-white/70 hover:text-white transition-colors">
                       eajejohnson@gmail.com
                     </a>
                   </div>
@@ -220,7 +262,7 @@ const ContactUs = () => {
                   <Phone className="h-5 w-5 text-[#00FF9C] mt-1" />
                   <div>
                     <div className="font-medium">Phone</div>
-                    <a href="tel:+11234567890" className="text-white/70 hover:text-white transition-colors">
+                    <a href="tel:+2349076618975" className="text-white/70 hover:text-white transition-colors">
                       +234-90-7661-8975
                     </a>
                   </div>
@@ -234,7 +276,6 @@ const ContactUs = () => {
               <p className="text-white/70">We typically respond to inquiries within 24 hours.</p>
             </div>
 
-            {/* Social media links */}
             <div ref={socialRef} className="pt-4">
               <h3 className="text-xl font-bold mb-4">Connect With Us</h3>
               <div className="flex gap-4">
